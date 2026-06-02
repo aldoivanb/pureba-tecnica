@@ -4,7 +4,7 @@ Prueba: **DESARROLLADOR JR**
 
 Deadline: **1 día**
 
-Nombre: 
+Nombre: Aldo ivan Bernal Mercado 
 
 ---
 
