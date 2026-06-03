@@ -346,10 +346,11 @@ user08Admin,user08Admin user08Admin user08Admin,Default,0
 user09Admin,user09Admin user09Admin user09Admin,Default,0
 user10Admin,user10Admin user10Admin user10Admin,Default,0
 leoAdmin,leoAdmin leoAdmin leoAdmin,Default,0
-adriAgent,adriAgent adriAgent adriAgent,Default,5158.94 <-------------------
+adriAgent,adriAgent adriAgent adriAgent,Default,5158.94 <
 agarciaAgent,agarciaAgent agarciaAgent agarciaAgent,Default,0
 agonzalezAgent,agonzalezAgent agonzalezAgent agonzalezAgent,Default,0
 
+el archivo se descarga desde postman el el boton de save response  que esta abajo del body 
 
 consultas sql 
 
