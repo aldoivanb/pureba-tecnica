@@ -272,7 +272,7 @@ Si el registro no existe, devuelve un error 404 NotFound.
 
  var existing = await _context.Logins.FindAsync(id); ->hace una busqueda por id en la tabla Logins 
 
-    if (existing == null)   
+ if (existing == null)   
      return NotFound();   ->si no existe ese id  regresa el error 404
 ejemplo 
 
@@ -361,21 +361,20 @@ WITH Sesiones AS (
         l1.Fecha AS LoginTime,  
         -- Selecciona el usuario y la fecha del login (inicio de sesión)
 
-        (
+   (
             SELECT MIN(l2.Fecha)
             -- Busca la fecha más cercana de logout (la mínima fecha después del login)
-
-            FROM ccloglogin l2
+      FROM ccloglogin l2
             WHERE l2.User_id = l1.User_id
               AND l2.TipoMov = 1
               AND l2.Fecha > l1.Fecha
         ) AS LogoutTime
 
-        -- Obtiene el logout correspondiente al login (misma persona, después en el tiempo)
+   Obtiene el logout correspondiente al login (misma persona, después en el tiempo)
 
-    FROM ccloglogin l1
+  FROM ccloglogin l1
     WHERE l1.TipoMov = 0
-    -- Solo toma registros de LOGIN (inicio de sesión)
+   Solo toma registros de LOGIN (inicio de sesión)
 ),
 Duraciones AS (
     SELECT
@@ -383,7 +382,7 @@ Duraciones AS (
         DATEDIFF(SECOND, LoginTime, LogoutTime) AS Segundos  
         -- Calcula la diferencia en segundos entre el login y el logout de cada sesión
 
-    FROM Sesiones
+   FROM Sesiones
     WHERE LogoutTime IS NOT NULL
 
 ),
@@ -393,7 +392,7 @@ Totales AS (
         SUM(Segundos) AS TotalSegundos   
         -- Suma todos los segundos de todas las sesiones del usuario
 
-    FROM Duraciones
+  FROM Duraciones
     GROUP BY User_id
     -- Agrupa los datos por usuario para calcular el total individual
 )
