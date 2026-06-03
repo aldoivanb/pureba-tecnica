@@ -146,3 +146,299 @@ Trabaja en SQL Server y realiza las siguientes consultas basadas en la tabla `cc
 ---
 
 Este examen evalúa tu capacidad para desarrollar APIs RESTful, realizar consultas avanzadas en SQL Server y generar reportes en formato CSV. Se valorará la organización del código, las mejores prácticas y cualquier documentación adicional que proporciones.
+
+
+
+Explicacion  Levantar SQL Server con Docker
+
+Para ejecutar la base de datos del proyecto se utiliza un contenedor de SQL Server en Docker.
+
+### 🔹 Comando de ejecución
+
+```bash
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=StrongPassw0rd!123" ^
+-p 1433:1433 --name sqlserver-container ^
+-d mcr.microsoft.com/mssql/server:2022-latest
+```
+ 
+Conexión a la base de datos
+Server: localhost,1433
+Usuario: sa
+Password: StrongPassw0rd!123
+
+##  Configuración de conexión (appsettings.json)
+
+La API se conecta a SQL Server mediante Entity Framework Core.
+
+###  Cadena de conexión
+
+En el archivo `appsettings.json` se debe configurar lo siguiente:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=LoginDB;User Id=sa;Password=StrongPassw0rd!123;TrustServerCertificate=True;"
+  }
+}
+```
+
+Restaurar dependencias del proyecto 
+dotnet restore
+
+ Compilar el proyecto
+dotnet build
+
+
+ Ejecutar la API
+dotnet run
+
+Resultado
+Una vez ejecutado, la API queda disponible en:
+
+http://localhost:5019/api/logins  
+
+ Endpoints de la API
+
+GET /api/logins
+
+ Devuelve todos los registros ordenados por fecha (desc)
+
+ Respuesta ejemplo:
+[
+ {
+        "id": 101,
+        "user_id": 70,
+        "extension": -3,
+        "tipoMov": 0,
+        "fecha": "2024-05-20T17:30:46"
+    },
+    {
+        "id": 100,
+        "user_id": 70,
+        "extension": -4,
+        "tipoMov": 1,
+        "fecha": "2024-05-20T08:29:51"
+    },
+    {
+        "id": 99,
+        "user_id": 70,
+        "extension": 0,
+        "tipoMov": 0,
+        "fecha": "2024-05-18T14:09:49"
+    },
+]
+
+POST - Crear login/logout
+POST /api/logins
+Body JSON
+{
+  "User_id": 1,
+  "Extension": 1234,
+  "TipoMov": 0,
+  "Fecha": "2026-06-03T10:00:00"
+}
+
+Validaciones del POST
+
+El sistema valida:
+
+ 1. Usuario no existe
+"El usuario no existe"
+ var userExists = await _context.Users
+    .AnyAsync(u => u.User_id == login.User_id); -> Este código consulta la tabla Users y verifica si existe un usuario con el mismo User_id que viene en el login, utilizando AnyAsync que devuelve verdadero si encuentra al menos un registro.
+
+    if (!userExists)
+    return BadRequest("El usuario no existe"); -> Si la variable userExists es falsa, significa que no se encontró el usuario en la base de datos, por lo tanto se retorna un error BadRequest indicando que el usuario no existe
+ 
+ 
+ 
+ 2. Datos nulos
+"Datos inválidos"
+if (login == null)
+    return BadRequest("Datos inválidos"); ->si no se envian datos o esta vacio   regresa  "Datos Invalidos "
+ 
+ PUT /api/logins/{id}
+
+ actualizar un registro existente en la tabla ccloglogin.
+
+Este endpoint busca un registro de login/logout por su id y, si existe, actualiza sus campos:
+
+User_id
+Extension
+TipoMov (0 = LOGIN, 1 = LOGOUT)
+Fecha
+
+Si el registro no existe, devuelve un error 404 NotFound.
+
+ var existing = await _context.Logins.FindAsync(id); ->hace una busqueda por id en la tabla Logins 
+
+    if (existing == null)   
+     return NotFound();   ->si no existe ese id  regresa el error 404
+ejemplo 
+
+http://localhost:5019/api/logins/1
+
+se envia body  
+ {
+    "user_id": 70,
+    "extension": -100,
+    "tipoMov": 1,
+    "fecha": "2023-01-11T00:48:23"
+  }
+Me devuelve el registro actualizado después de aplicar los cambios en la base de datos
+
+  {
+    "id": 1,
+    "user_id": 70,
+    "extension": -100,
+    "tipoMov": 1,
+    "fecha": "2023-01-11T00:48:23"
+}
+
+ 
+DELETE /api/logins/{id}
+ Permite eliminar un registro existente de la tabla ccloglogin.
+
+Este endpoint elimina un registro de login/logout según el id proporcionado en la URL.
+
+Si el registro existe, se elimina permanentemente de la base de datos.
+Si no existe, devuelve un error 404 NotFound.
+
+
+var existing = await _context.Logins.FindAsync(id);------> Busca en la tabla Logins un registro por su ID.
+
+if (existing == null)
+    return NotFound();  --->  Si no encuentra el registro 404 NotFound
+
+
+__context.Logins.Remove(existing);
+await _context.SaveChangesAsync(); -----> Elimina el registro de la base de datos y guarda los cambios.
+
+
+DELETE http://localhost:5019/api/logins/1
+
+devuelve 
+
+{
+    "message": "Eliminado correctamente"
+}
+
+
+
+GET /api/logins/report/csv
+ Generación de reporte CSV de horas trabajadas
+
+Este endpoint genera un archivo CSV descargable con:
+
+Login del usuario
+Nombre completo
+Área
+Total de horas trabajadas (calculadas con logs de login/logout)
+
+Get  http://localhost:5019/api/logins/report/csv
+
+la api devuelve 
+user04Admin,user04Admin user04Admin user04Admin,Default,0
+user05Admin,user05Admin user05Admin user05Admin,Default,0
+user06Admin,user06Admin user06Admin user06Admin,Default,0
+user07Admin,user07Admin user07Admin user07Admin,Default,0
+user08Admin,user08Admin user08Admin user08Admin,Default,0
+user09Admin,user09Admin user09Admin user09Admin,Default,0
+user10Admin,user10Admin user10Admin user10Admin,Default,0
+leoAdmin,leoAdmin leoAdmin leoAdmin,Default,0
+adriAgent,adriAgent adriAgent adriAgent,Default,5158.94 <-------------------
+agarciaAgent,agarciaAgent agarciaAgent agarciaAgent,Default,0
+agonzalezAgent,agonzalezAgent agonzalezAgent agonzalezAgent,Default,0
+
+
+consultas sql 
+
+Usuario mas tiempo logueado
+WITH Sesiones AS (
+    SELECT
+        l1.User_id,
+        l1.Fecha AS LoginTime,  
+        -- Selecciona el usuario y la fecha del login (inicio de sesión)
+
+        (
+            SELECT MIN(l2.Fecha)
+            -- Busca la fecha más cercana de logout (la mínima fecha después del login)
+
+            FROM ccloglogin l2
+            WHERE l2.User_id = l1.User_id
+              AND l2.TipoMov = 1
+              AND l2.Fecha > l1.Fecha
+        ) AS LogoutTime
+
+        -- Obtiene el logout correspondiente al login (misma persona, después en el tiempo)
+
+    FROM ccloglogin l1
+    WHERE l1.TipoMov = 0
+    -- Solo toma registros de LOGIN (inicio de sesión)
+),
+Duraciones AS (
+    SELECT
+        User_id,
+        DATEDIFF(SECOND, LoginTime, LogoutTime) AS Segundos  
+        -- Calcula la diferencia en segundos entre el login y el logout de cada sesión
+
+    FROM Sesiones
+    WHERE LogoutTime IS NOT NULL
+
+),
+Totales AS (
+    SELECT
+        User_id,
+        SUM(Segundos) AS TotalSegundos   
+        -- Suma todos los segundos de todas las sesiones del usuario
+
+    FROM Duraciones
+    GROUP BY User_id
+    -- Agrupa los datos por usuario para calcular el total individual
+)
+SELECT TOP 1
+    User_id,
+    TotalSegundos
+FROM Totales
+ORDER BY TotalSegundos DESC;
+--- los ordena los registros el que tiene mas tiempo va primero 
+
+
+
+WITH Sesiones AS (
+    SELECT
+        l1.User_id,
+        l1.Fecha AS LoginTime,
+        (
+            SELECT MIN(l2.Fecha)
+            FROM ccloglogin l2
+            WHERE l2.User_id = l1.User_id
+              AND l2.TipoMov = 1
+              AND l2.Fecha > l1.Fecha
+        ) AS LogoutTime
+    FROM ccloglogin l1
+    WHERE l1.TipoMov = 0
+),
+Duraciones AS (
+    SELECT
+        User_id,
+        DATEDIFF(SECOND, LoginTime, LogoutTime) AS Segundos
+    FROM Sesiones
+    WHERE LogoutTime IS NOT NULL
+),
+Totales AS (
+    SELECT
+        User_id,
+        SUM(Segundos) AS TotalSegundos
+    FROM Duraciones
+    GROUP BY User_id
+)
+SELECT TOP 1
+    User_id,
+    TotalSegundos
+FROM Totales
+ORDER BY TotalSegundos ASC;----->el que tiene menos tiempo 
+
+
+
+
